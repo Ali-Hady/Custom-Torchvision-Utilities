@@ -1,0 +1,47 @@
+import pathlib
+import pandas as pd
+import torch
+from torch.utils.data import Dataset
+from torchvision import transforms
+from typing import Tuple, Union
+from PIL import Image
+
+class CustomImageDataset(Dataset):
+    """This is a custom dataset to deal with some of Kaggle's competitions formats
+    """
+    def __init__(self, image_dir: pathlib.Path, csv_labels: pd.DataFrame, transform: transforms.Compose | None = None):
+        """Initialize the dataset by taking image directory, image-to-label csv file and the transformation
+
+        Args:
+            image_dir (pathlib.Path): the directory where images are stored
+            csv_labels (pd.DataFrame): the dataframe containing image ids and their corresponding labels (columns: "image_id", "label"). Should match the images in image_dir
+            transform (transforms.Compose | None, optional): the transformation to be applied to the images. Defaults to None.
+        """
+        self.image_dir = image_dir
+        self.csv_labels = csv_labels
+        self.transform = transform
+
+    def _get_image_label(self, row: pd.Series) -> Tuple[Union[torch.Tensor, Image.Image], int]:
+        """A private helper function to match id with the actual image and return both the image and its label
+
+        Args:
+            row (pd.Series): the row from the dataframe containing image id and label
+
+        Returns:
+            Tuple[Union[torch.Tensor, Image.Image], int]: the image and its corresponding label
+        """
+        path = self.image_dir / row["image_id"]
+        img = Image.open(path).convert("RGB")
+
+        if self.transform:
+            img = self.transform(img)
+
+        label = int(row["label"])
+        return img, label
+    
+    def __len__(self) -> int:
+        return len(self.csv_labels)
+
+    def __getitem__(self, idx: int) -> Tuple[Union[torch.Tensor, Image.Image], int]:
+        row = self.csv_labels.iloc[idx]
+        return self._get_image_label(row)
