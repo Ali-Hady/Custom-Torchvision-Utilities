@@ -35,6 +35,8 @@ class CustomImageDataset(Dataset):
 
         if self.transform:
             img_tensor = self.transform(img)
+        else:
+            img_tensor = img
 
         label = int(row["label"])
         img.close()  # Close the image file to free resources
