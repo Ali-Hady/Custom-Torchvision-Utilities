@@ -34,11 +34,13 @@ class CustomImageDataset(Dataset):
         img = Image.open(path).convert("RGB")
 
         if self.transform:
-            img = self.transform(img)
+            img_tensor = self.transform(img)
 
         label = int(row["label"])
-        return img, label
-    
+        img.close()  # Close the image file to free resources
+        
+        return img_tensor, label
+
     def __len__(self) -> int:
         return len(self.csv_labels)
 
